@@ -87,6 +87,14 @@ supports package usage for over 200 new downloaders per month
 def crypto_cointegration():
     st.title("Crypto Cointegration Strategy")
 
+def file_upload():
+    st.title("File Upload")
+    uploaded_file = st.file_uploader("Choose a file")
+    if uploaded_file is not None:
+        bytes_data = uploaded_file.read()
+        st.write("filename:", uploaded_file.name)
+        st.write(bytes_data)
+
 
 def main():
     st.sidebar.title("Navigation")
@@ -94,13 +102,13 @@ def main():
     pages = {
         "Resume": resume_main,
         "Crypto Cointegration Strategy": crypto_cointegration,
+        "File Upload": file_upload,
     }
 
     page = st.sidebar.selectbox("Choose a page", list(pages.keys()))
 
     # Call the appropriate function based on the user selection.
     pages[page]()
-
 
 
 main()
