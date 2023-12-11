@@ -1,4 +1,6 @@
 import streamlit as st
+from azure.storage.blob import BlobServiceClient
+import os
 
 def resume_main():
     st.title("Welcome to my Resume")
@@ -89,11 +91,31 @@ def crypto_cointegration():
 
 def file_upload():
     st.title("File Upload")
-    uploaded_file = st.file_uploader("Choose a file")
+    uploaded_file = st.file_uploader("Choose a file", type="pdf")
+
     if uploaded_file is not None:
-        bytes_data = uploaded_file.read()
-        st.write("filename:", uploaded_file.name)
-        st.write(bytes_data)
+        # Connect to Azure Blob Storage
+        # connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
+        connect_str = "DefaultEndpointsProtocol=https;AccountName=resumefilestorage;AccountKey=92bBa1z2EeTOWcam9DqjjOj4bVzg9sXVVgBTiXLshyBHh9AyjtbcL/30WgKBAdwnVXKD92aMDXKL+AStk/EJpg==;EndpointSuffix=core.windows.net"
+        if connect_str is None:
+            st.error("Azure Storage connection string not found.")
+            return
+
+        # Creating a unique blob name
+        blob_name = f"{uploaded_file.name}"
+
+        try:
+            # Initialize Blob Service Client
+            blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+            container_name = "new-container"  # Replace with your container name
+            blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+
+            # Upload the file
+            blob_client.upload_blob(uploaded_file, overwrite=True)
+            st.success("File uploaded successfully")
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
 
 def main():
