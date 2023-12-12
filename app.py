@@ -1,5 +1,6 @@
 import streamlit as st
 from azure.storage.blob import BlobServiceClient
+import base64
 import os
 
 def resume_main():
@@ -117,6 +118,45 @@ def file_upload():
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
+def file_download():
+    st.title("File Download")
+    st.markdown("""---""")
+    st.subheader("Download a file from Azure Blob Storage")
+
+    # Connect to Azure Blob Storage
+    connect_str = "DefaultEndpointsProtocol=https;AccountName=resumefilestorage;AccountKey=92bBa1z2EeTOWcam9DqjjOj4bVzg9sXVVgBTiXLshyBHh9AyjtbcL/30WgKBAdwnVXKD92aMDXKL+AStk/EJpg==;EndpointSuffix=core.windows.net"
+    if connect_str is None:
+        st.error("Azure Storage connection string not found.")
+        return
+
+    try:
+        # Initialize Blob Service Client
+        blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+        container_name = "new-container"  # Replace with your container name
+
+        # Retrieve the list of blobs in the container
+        blob_list = blob_service_client.get_container_client(container_name).list_blobs()
+        files = [blob.name for blob in blob_list]
+
+        # Dropdown for selecting the file
+        selected_file = st.selectbox("Select a file", files)
+
+        if st.button('Download Selected File'):
+            blob_client = blob_service_client.get_blob_client(container=container_name, blob=selected_file)
+
+            # Download the file
+            stream = blob_client.download_blob()
+            file_bytes = stream.readall()
+
+            # Convert the bytes to a base64 string for download
+            b64 = base64.b64encode(file_bytes).decode()
+
+            # Create a download link
+            href = f'<a href="data:application/octet-stream;base64,{b64}" download="{selected_file}">Click to download file</a>'
+            st.markdown(href, unsafe_allow_html=True)
+
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
 
 def main():
     st.sidebar.title("Navigation")
@@ -125,6 +165,7 @@ def main():
         "Resume": resume_main,
         "Crypto Cointegration Strategy": crypto_cointegration,
         "File Upload": file_upload,
+        "File Download": file_download
     }
 
     page = st.sidebar.selectbox("Choose a page", list(pages.keys()))
@@ -134,3 +175,6 @@ def main():
 
 
 main()
+
+
+
